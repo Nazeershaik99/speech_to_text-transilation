@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Speech to Text Translator</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gradient-to-br from-purple-100 to-blue-100 min-h-screen text-gray-800 font-sans">
+
+  <!-- Header -->
+  <header class="bg-white shadow-md py-4 px-8">
+    <h1 class="text-3xl font-bold text-center text-indigo-700">🎤 Speech to Text Translator</h1>
+  </header>
+
+  <!-- Main Section -->
+  <main class="p-6 md:p-12 lg:p-16 space-y-8">
+
+    <!-- Language Selection -->
+    <section class="max-w-4xl mx-auto">
+      <label for="language" class="block text-xl font-semibold mb-2">Select Output Language:</label>
+      <select id="language" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-400">
+        <option value="hi">Hindi</option>
+        <option value="bn">Bengali</option>
+        <option value="ta">Tamil</option>
+        <option value="te">Telugu</option>
+        <option value="kn">Kannada</option>
+        <option value="ml">Malayalam</option>
+        <option value="gu">Gujarati</option>
+        <option value="mr">Marathi</option>
+        <option value="pa">Punjabi</option>
+        <option value="ur">Urdu</option>
+        <option value="en">English</option>
+      </select>
+    </section>
+
+    <!-- Record Button & Status -->
+    <section class="max-w-4xl mx-auto flex flex-col sm:flex-row items-center gap-4">
+      <button id="start-btn" class="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold px-6 py-3 rounded-full transition shadow-md disabled:opacity-50">
+        🎙️ Start Recording
+      </button>
+      <span id="status-text" class="text-sm italic text-gray-700"></span>
+    </section>
+
+    <!-- Original Text -->
+    <section class="max-w-4xl mx-auto">
+      <label class="block text-lg font-medium mb-1">Original Text:</label>
+      <textarea id="original-text" class="w-full h-28 p-4 border border-gray-300 rounded-lg resize-none bg-white text-gray-700" readonly></textarea>
+    </section>
+
+    <!-- Translated Text -->
+    <section class="max-w-4xl mx-auto">
+      <label class="block text-lg font-medium mb-1">Translated Text:</label>
+      <textarea id="translated-text" class="w-full h-28 p-4 border border-gray-300 rounded-lg resize-none bg-white text-gray-700" readonly></textarea>
+    </section>
+
+    <!-- Action Buttons -->
+    <section class="max-w-4xl mx-auto flex justify-end gap-3">
+      <button id="copy-btn" class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg transition shadow-sm">Copy</button>
+      <button id="clear-btn" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg transition shadow-sm">Clear</button>
+    </section>
+  </main>
+
+  <!-- Script -->
+  <script>
+    const startBtn = document.getElementById('start-btn');
+    const statusText = document.getElementById('status-text');
+    const originalText = document.getElementById('original-text');
+    const translatedText = document.getElementById('translated-text');
+    const languageSelect = document.getElementById('language');
+    const copyBtn = document.getElementById('copy-btn');
+    const clearBtn = document.getElementById('clear-btn');
+
+    startBtn.addEventListener('click', async () => {
+      statusText.textContent = '🎙️ Listening...';
+      startBtn.disabled = true;
+
+      try {
+        const res = await fetch('http://127.0.0.1:5000/speech-to-text', { method: 'POST' });
+        const data = await res.json();
+
+        if (data.text) {
+          originalText.value = data.text;
+          statusText.textContent = '🔄 Translating...';
+
+          const lang = languageSelect.value;
+          const res2 = await fetch('http://127.0.0.1:5000/translate', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ text: data.text, target_language: lang })
+          });
+
+          const result = await res2.json();
+          translatedText.value = result.translation || 'Translation failed';
+          statusText.textContent = '✅ Done';
+        } else {
+          originalText.value = '';
+          translatedText.value = '';
+          statusText.textContent = data.error || '⚠️ Could not understand audio.';
+        }
+      } catch (error) {
+        statusText.textContent = '❌ Network error: ' + error.message;
+      }
+
+      setTimeout(() => statusText.textContent = '', 3000);
+      startBtn.disabled = false;
+    });
+
+    copyBtn.addEventListener('click', () => {
+      navigator.clipboard.writeText(translatedText.value);
+    });
+
+    clearBtn.addEventListener('click', () => {
+      originalText.value = '';
+      translatedText.value = '';
+      statusText.textContent = '';
+    });
+  </script>
+</body>
+</html>

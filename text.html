@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Text to Text Translator</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gradient-to-br from-green-100 to-blue-100 min-h-screen text-gray-800 font-sans">
+
+  <header class="bg-white shadow-md py-4 px-8">
+    <h1 class="text-3xl font-bold text-center text-green-700">📝 Text to Text Translator</h1>
+  </header>
+
+  <main class="p-6 md:p-12 lg:p-16 space-y-8">
+
+    <!-- Language Selection -->
+    <section class="max-w-4xl mx-auto">
+      <label for="language" class="block text-xl font-semibold mb-2">Select Output Language:</label>
+      <select id="language" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-400">
+        <option value="hi">Hindi</option>
+        <option value="bn">Bengali</option>
+        <option value="ta">Tamil</option>
+        <option value="te">Telugu</option>
+        <option value="kn">Kannada</option>
+        <option value="ml">Malayalam</option>
+        <option value="gu">Gujarati</option>
+        <option value="mr">Marathi</option>
+        <option value="pa">Punjabi</option>
+        <option value="ur">Urdu</option>
+        <option value="en">English</option>
+      </select>
+    </section>
+
+    <!-- Input Text -->
+    <section class="max-w-4xl mx-auto">
+      <label class="block text-lg font-medium mb-1">Enter Text to Translate:</label>
+      <textarea id="input-text" class="w-full h-28 p-4 border border-gray-300 rounded-lg resize-none bg-white text-gray-700"></textarea>
+    </section>
+
+    <!-- Translated Output -->
+    <section class="max-w-4xl mx-auto">
+      <label class="block text-lg font-medium mb-1">Translated Text:</label>
+      <textarea id="translated-text" class="w-full h-28 p-4 border border-gray-300 rounded-lg resize-none bg-white text-gray-700" readonly></textarea>
+    </section>
+
+    <!-- Action Buttons -->
+    <section class="max-w-4xl mx-auto flex justify-end gap-3">
+      <button id="translate-btn" class="bg-indigo-500 hover:bg-indigo-600 text-white px-5 py-2 rounded-lg transition">Translate</button>
+      <button id="clear-btn" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg transition">Clear</button>
+    </section>
+  </main>
+
+  <script>
+    const translateBtn = document.getElementById('translate-btn');
+    const clearBtn = document.getElementById('clear-btn');
+    const inputText = document.getElementById('input-text');
+    const translatedText = document.getElementById('translated-text');
+    const languageSelect = document.getElementById('language');
+
+    translateBtn.addEventListener('click', async () => {
+      const text = inputText.value.trim();
+      if (!text) return;
+
+      const lang = languageSelect.value;
+      try {
+        const res = await fetch('http://127.0.0.1:5000/translate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ text, target_language: lang })
+        });
+        const data = await res.json();
+        translatedText.value = data.translation || 'Translation failed.';
+      } catch (err) {
+        translatedText.value = '❌ Error: ' + err.message;
+      }
+    });
+
+    clearBtn.addEventListener('click', () => {
+      inputText.value = '';
+      translatedText.value = '';
+    });
+  </script>
+</body>
+</html>
